@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Location App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 20px; }
+        #location { margin-top: 20px; }
+    </style>
+    <script src="cordova.js"></script>
+    <script src="js/index.js"></script>
+</head>
+<body>
+    <h1>Find My Location</h1>
+    <button onclick="getLocation()">Get Current Location</button>
+    <div id="location">Waiting for location...</div>
+</body>
+</html>
+
+
+
+
+
+// index.js
+function getLocation() {
+    navigator.geolocation.getCurrentPosition(
+        onSuccess,
+        onError,
+        { enableHighAccuracy: true }
+    );
+}
+
+function onSuccess(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    document.getElementById("location").innerHTML =
+        `Latitude: ${latitude} <br> Longitude: ${longitude}`;
+}
+
+function onError(error) {
+    document.getElementById("location").innerHTML =
+        `Error: ${error.message}`;
+}
+
+
+
+
+
+
+
+// config.xml
+<platform name="android">
+    <config-file target="AndroidManifest.xml" parent="/*">
+        <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+        <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    </config-file>
+</platform>
