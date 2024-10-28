@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">libApp</string>
+    <string name="book_image">Book Image</string>
+    <string name="book_title">Book Title</string>
+    <string name="author_name">Author Name</string>
+    <string name="borrow">Borrow</string>
+    <string name="book_gallery">Book Gallery</string>
+</resources>

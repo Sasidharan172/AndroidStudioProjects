@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <!-- Source folders -->
+    <classpathentry kind="src" path="src/main/java"/>
+    <classpathentry kind="src" path="src/main/kotlin"/>
+    <classpathentry kind="src" path="src/test/java"/>
+    <classpathentry kind="src" path="src/test/kotlin"/>
+
+    <!-- Output folder -->
+    <classpathentry kind="output" path="build/classes"/>
+
+    <!-- JDK -->
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+
+    <!-- Kotlin stdlib -->
+    <classpathentry kind="lib" path="/opt/homebrew/opt/kotlin/bin/lib/kotlin-stdlib.jar"/>
+
+    <!-- Android SDK -->
+    <classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+
+    <!-- External dependencies -->
+    <classpathentry kind="lib" path="libs/your-external-library.jar"/>
+
+    <!-- Gradle dependencies (you'll need to replace these with your actual paths) -->
+    <classpathentry kind="lib" path="/Users/sasidharana/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.5.0/..."/>
+    <classpathentry kind="lib" path="/Users/sasidharana/.gradle/caches/modules-2/files-2.1/androidx.core/core-ktx/1.6.0/..."/>
+    <!-- Add more Gradle dependencies as needed -->
+</classpath>
