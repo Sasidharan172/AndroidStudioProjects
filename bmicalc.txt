@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/weightInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Weight (kg)"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/heightInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Height (m)"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/calculateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calculate BMI"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/resultText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="20dp"
+        android:text="BMI Result"
+        android:textSize="18sp"
+        android:layout_gravity="center" />
+</LinearLayout>
+
+
+
+
+package com.example.bmicalculator;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    private EditText weightInput, heightInput;
+    private TextView resultText;
+    private Button calculateButton;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        weightInput = findViewById(R.id.weightInput);
+        heightInput = findViewById(R.id.heightInput);
+        resultText = findViewById(R.id.resultText);
+        calculateButton = findViewById(R.id.calculateButton);
+
+        calculateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                calculateBMI();
+            }
+        });
+    }
+
+    private void calculateBMI() {
+        String weightStr = weightInput.getText().toString();
+        String heightStr = heightInput.getText().toString();
+
+        if (!weightStr.isEmpty() && !heightStr.isEmpty()) {
+            double weight = Double.parseDouble(weightStr);
+            double height = Double.parseDouble(heightStr);
+            double bmi = weight / (height * height);
+
+            resultText.setText("Your BMI: " + String.format("%.2f", bmi));
+        } else {
+            resultText.setText("Please enter both weight and height.");
+        }
+    }
+}
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BMI Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #result { padding-top: 20px; font-size: 18px; }
+    </style>
+    <script src="cordova.js"></script>
+    <script src="js/index.js"></script>
+</head>
+<body>
+    <h1>BMI Calculator</h1>
+    <label>Weight (kg):</label>
+    <input type="number" id="weight" step="0.1" placeholder="Enter weight">
+    <br><br>
+    <label>Height (m):</label>
+    <input type="number" id="height" step="0.01" placeholder="Enter height">
+    <br><br>
+    <button onclick="calculateBMI()">Calculate BMI</button>
+    <div id="result">Your BMI will be displayed here.</div>
+
+    <script>
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById("weight").value);
+            const height = parseFloat(document.getElementById("height").value);
+
+            if (!isNaN(weight) && !isNaN(height) && height > 0) {
+                const bmi = weight / (height * height);
+                document.getElementById("result").innerText = "Your BMI: " + bmi.toFixed(2);
+            } else {
+                document.getElementById("result").innerText = "Please enter valid values for weight and height.";
+            }
+        }
+    </script>
+</body>
+</html>
