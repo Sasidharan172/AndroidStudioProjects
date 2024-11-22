@@ -1,0 +1,196 @@
+// database/DatabaseInit.ts
+import SQLite, { SQLiteDatabase, Transaction } from 'react-native-sqlite-storage';
+
+// Enable SQLite debugging
+SQLite.DEBUG(true);
+// Set default database location
+SQLite.enablePromise(true);
+
+export class DatabaseInit {
+  private database: SQLiteDatabase | null = null;
+  private static instance: DatabaseInit;
+
+  static getInstance(): DatabaseInit {
+    if (!DatabaseInit.instance) {
+      DatabaseInit.instance = new DatabaseInit();
+    }
+    return DatabaseInit.instance;
+  }
+
+  // Initialize database
+  async getDBConnection(): Promise<SQLiteDatabase> {
+    if (this.database) {
+      return this.database;
+    }
+
+    this.database = await SQLite.openDatabase({
+      name: 'MainDB',
+      location: 'default'
+    });
+
+    await this.createTables();
+    return this.database;
+  }
+
+  // Create tables if they don't exist
+  private async createTables(): Promise<void> {
+    const db = await this.getDBConnection();
+    
+    // Users table
+    await db.executeSql(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Add more table creation statements here
+  }
+}
+
+// models/User.ts
+export interface User {
+  id?: number;
+  name: string;
+  email: string;
+  created_at?: string;
+}
+
+// repositories/UserRepository.ts
+export class UserRepository {
+  private dbInit: DatabaseInit;
+
+  constructor() {
+    this.dbInit = DatabaseInit.getInstance();
+  }
+
+  async createUser(user: Omit<User, 'id' | 'created_at'>): Promise<User> {
+    try {
+      const db = await this.dbInit.getDBConnection();
+      const [result] = await db.executeSql(
+        'INSERT INTO users (name, email) VALUES (?, ?) RETURNING *',
+        [user.name, user.email]
+      );
+      
+      return result.rows.item(0) as User;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  async getUserById(id: number): Promise<User | null> {
+    try {
+      const db = await this.dbInit.getDBConnection();
+      const [result] = await db.executeSql(
+        'SELECT * FROM users WHERE id = ?',
+        [id]
+      );
+      
+      return result.rows.length > 0 ? result.rows.item(0) as User : null;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      throw error;
+    }
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const db = await this.dbInit.getDBConnection();
+      const [results] = await db.executeSql('SELECT * FROM users');
+      
+      const users: User[] = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        users.push(results.rows.item(i) as User);
+      }
+      return users;
+    } catch (error) {
+      console.error('Error getting users:', error);
+      throw error;
+    }
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | null> {
+    try {
+      const db = await this.dbInit.getDBConnection();
+      const setClause = Object.keys(userData)
+        .map(key => `${key} = ?`)
+        .join(', ');
+      const values = [...Object.values(userData), id];
+
+      const [result] = await db.executeSql(
+        `UPDATE users SET ${setClause} WHERE id = ? RETURNING *`,
+        values
+      );
+      
+      return result.rows.length > 0 ? result.rows.item(0) as User : null;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      const db = await this.dbInit.getDBConnection();
+      const [result] = await db.executeSql(
+        'DELETE FROM users WHERE id = ?',
+        [id]
+      );
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+}
+
+// Example usage in a React Native component
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button } from 'react-native';
+
+const UserScreen: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const userRepo = new UserRepository();
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      const allUsers = await userRepo.getAllUsers();
+      setUsers(allUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const addNewUser = async () => {
+    try {
+      await userRepo.createUser({
+        name: 'John Doe',
+        email: 'john@example.com'
+      });
+      loadUsers(); // Reload users after adding
+    } catch (error) {
+      console.error('Error adding user:', error);
+    }
+  };
+
+  return (
+    <View>
+      <Button title="Add New User" onPress={addNewUser} />
+      {users.map(user => (
+        <View key={user.id}>
+          <Text>Name: {user.name}</Text>
+          <Text>Email: {user.email}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+export default UserScreen;
