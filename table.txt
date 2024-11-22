@@ -1,0 +1,285 @@
+// types.ts
+interface TableData {
+  id: string;
+  name: string;
+  age: number;
+  city: string;
+  email: string;
+}
+
+// components/BasicTable.tsx
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+
+interface BasicTableProps {
+  data: TableData[];
+}
+
+export const BasicTable: React.FC<BasicTableProps> = ({ data }) => {
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <Text style={[styles.headerCell, styles.idCell]}>ID</Text>
+        <Text style={[styles.headerCell, styles.nameCell]}>Name</Text>
+        <Text style={[styles.headerCell, styles.ageCell]}>Age</Text>
+        <Text style={[styles.headerCell, styles.cityCell]}>City</Text>
+        <Text style={[styles.headerCell, styles.emailCell]}>Email</Text>
+      </View>
+
+      {/* Data Rows */}
+      {data.map((item) => (
+        <View key={item.id} style={styles.row}>
+          <Text style={[styles.cell, styles.idCell]}>{item.id}</Text>
+          <Text style={[styles.cell, styles.nameCell]}>{item.name}</Text>
+          <Text style={[styles.cell, styles.ageCell]}>{item.age}</Text>
+          <Text style={[styles.cell, styles.cityCell]}>{item.city}</Text>
+          <Text style={[styles.cell, styles.emailCell]}>{item.email}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+// components/ScrollableTable.tsx
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+
+interface ScrollableTableProps {
+  data: TableData[];
+}
+
+export const ScrollableTable: React.FC<ScrollableTableProps> = ({ data }) => {
+  return (
+    <View style={styles.container}>
+      {/* Fixed Header */}
+      <View style={styles.headerRow}>
+        <Text style={[styles.headerCell, styles.idCell]}>ID</Text>
+        <Text style={[styles.headerCell, styles.nameCell]}>Name</Text>
+        <Text style={[styles.headerCell, styles.ageCell]}>Age</Text>
+        <Text style={[styles.headerCell, styles.cityCell]}>City</Text>
+        <Text style={[styles.headerCell, styles.emailCell]}>Email</Text>
+      </View>
+
+      {/* Scrollable Body */}
+      <ScrollView style={styles.scrollView}>
+        {data.map((item) => (
+          <View key={item.id} style={styles.row}>
+            <Text style={[styles.cell, styles.idCell]}>{item.id}</Text>
+            <Text style={[styles.cell, styles.nameCell]}>{item.name}</Text>
+            <Text style={[styles.cell, styles.ageCell]}>{item.age}</Text>
+            <Text style={[styles.cell, styles.cityCell]}>{item.city}</Text>
+            <Text style={[styles.cell, styles.emailCell]}>{item.email}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+// components/SortableTable.tsx
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons'; // Make sure to install expo-vector-icons
+
+interface SortableTableProps {
+  data: TableData[];
+}
+
+type SortKey = keyof TableData;
+type SortOrder = 'asc' | 'desc';
+
+export const SortableTable: React.FC<SortableTableProps> = ({ data: initialData }) => {
+  const [data, setData] = useState<TableData[]>(initialData);
+  const [sortConfig, setSortConfig] = useState<{
+    key: SortKey;
+    order: SortOrder;
+  } | null>(null);
+
+  const handleSort = (key: SortKey) => {
+    let order: SortOrder = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.order === 'asc') {
+      order = 'desc';
+    }
+
+    const sortedData = [...data].sort((a, b) => {
+      if (a[key] < b[key]) return order === 'asc' ? -1 : 1;
+      if (a[key] > b[key]) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    setData(sortedData);
+    setSortConfig({ key, order });
+  };
+
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sortConfig?.key !== columnKey) {
+      return <Feather name="arrow-up-down" size={14} color="#666" />;
+    }
+    return (
+      <Feather
+        name={sortConfig.order === 'asc' ? 'arrow-up' : 'arrow-down'}
+        size={14}
+        color="#000"
+      />
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          style={[styles.headerCell, styles.idCell]}
+          onPress={() => handleSort('id')}
+        >
+          <Text style={styles.headerText}>ID</Text>
+          <SortIcon columnKey="id" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.headerCell, styles.nameCell]}
+          onPress={() => handleSort('name')}
+        >
+          <Text style={styles.headerText}>Name</Text>
+          <SortIcon columnKey="name" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.headerCell, styles.ageCell]}
+          onPress={() => handleSort('age')}
+        >
+          <Text style={styles.headerText}>Age</Text>
+          <SortIcon columnKey="age" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.headerCell, styles.cityCell]}
+          onPress={() => handleSort('city')}
+        >
+          <Text style={styles.headerText}>City</Text>
+          <SortIcon columnKey="city" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.headerCell, styles.emailCell]}
+          onPress={() => handleSort('email')}
+        >
+          <Text style={styles.headerText}>Email</Text>
+          <SortIcon columnKey="email" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Scrollable Body */}
+      <ScrollView style={styles.scrollView}>
+        {data.map((item) => (
+          <View key={item.id} style={styles.row}>
+            <Text style={[styles.cell, styles.idCell]}>{item.id}</Text>
+            <Text style={[styles.cell, styles.nameCell]}>{item.name}</Text>
+            <Text style={[styles.cell, styles.ageCell]}>{item.age}</Text>
+            <Text style={[styles.cell, styles.cityCell]}>{item.city}</Text>
+            <Text style={[styles.cell, styles.emailCell]}>{item.email}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+// Shared styles
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  headerCell: {
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerText: {
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  cell: {
+    padding: 12,
+  },
+  // Column widths
+  idCell: {
+    width: 60,
+  },
+  nameCell: {
+    width: 120,
+  },
+  ageCell: {
+    width: 60,
+  },
+  cityCell: {
+    width: 100,
+  },
+  emailCell: {
+    flex: 1,
+    minWidth: 150,
+  },
+});
+
+// Example usage in App.tsx
+import React from 'react';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { BasicTable, ScrollableTable, SortableTable } from './components';
+
+const sampleData: TableData[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    age: 30,
+    city: 'New York',
+    email: 'john@example.com',
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    age: 25,
+    city: 'Los Angeles',
+    email: 'jane@example.com',
+  },
+  // Add more sample data as needed
+];
+
+const App = () => {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.section}>
+        <SortableTable data={sampleData} />
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+  },
+  section: {
+    margin: 16,
+    flex: 1,
+  },
+});
+
+export default App;
