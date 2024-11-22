@@ -1,0 +1,440 @@
+// App.tsx
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import expenseReducer from './src/store/expenseSlice';
+import HomeScreen from './src/screens/HomeScreen';
+import AddExpenseScreen from './src/screens/AddExpenseScreen';
+import ExpenseDetailsScreen from './src/screens/ExpenseDetailsScreen';
+
+const Stack = createStackNavigator();
+const store = configureStore({
+  reducer: {
+    expenses: expenseReducer,
+  },
+});
+
+const App = () => {
+  return (
+    <Provider store={store}>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen} 
+            options={{ title: 'Expense Tracker' }}
+          />
+          <Stack.Screen 
+            name="AddExpense" 
+            component={AddExpenseScreen} 
+            options={{ title: 'Add Expense' }}
+          />
+          <Stack.Screen 
+            name="ExpenseDetails" 
+            component={ExpenseDetailsScreen} 
+            options={{ title: 'Expense Details' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </Provider>
+  );
+};
+
+export default App;
+
+// src/types/index.ts
+export interface Expense {
+  id: string;
+  title: string;
+  amount: number;
+  date: string;
+  category: string;
+  notes?: string;
+}
+
+// src/store/expenseSlice.ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Expense } from '../types';
+
+interface ExpenseState {
+  expenses: Expense[];
+  totalAmount: number;
+}
+
+const initialState: ExpenseState = {
+  expenses: [],
+  totalAmount: 0,
+};
+
+const expenseSlice = createSlice({
+  name: 'expenses',
+  initialState,
+  reducers: {
+    addExpense: (state, action: PayloadAction<Expense>) => {
+      state.expenses.push(action.payload);
+      state.totalAmount += action.payload.amount;
+    },
+    deleteExpense: (state, action: PayloadAction<string>) => {
+      const expense = state.expenses.find(exp => exp.id === action.payload);
+      if (expense) {
+        state.totalAmount -= expense.amount;
+        state.expenses = state.expenses.filter(exp => exp.id !== action.payload);
+      }
+    },
+    updateExpense: (state, action: PayloadAction<Expense>) => {
+      const index = state.expenses.findIndex(exp => exp.id === action.payload.id);
+      if (index !== -1) {
+        state.totalAmount = state.totalAmount - state.expenses[index].amount + action.payload.amount;
+        state.expenses[index] = action.payload;
+      }
+    },
+  },
+});
+
+export const { addExpense, deleteExpense, updateExpense } = expenseSlice.actions;
+export default expenseSlice.reducer;
+
+// src/screens/HomeScreen.tsx
+import React from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { Expense } from '../types';
+import { deleteExpense } from '../store/expenseSlice';
+
+const HomeScreen = ({ navigation }) => {
+  const expenses = useSelector((state: any) => state.expenses.expenses);
+  const totalAmount = useSelector((state: any) => state.expenses.totalAmount);
+  const dispatch = useDispatch();
+
+  const renderExpenseItem = ({ item }: { item: Expense }) => (
+    <TouchableOpacity
+      style={styles.expenseItem}
+      onPress={() => navigation.navigate('ExpenseDetails', { expense: item })}
+    >
+      <View style={styles.expenseInfo}>
+        <Text style={styles.expenseTitle}>{item.title}</Text>
+        <Text style={styles.expenseCategory}>{item.category}</Text>
+      </View>
+      <View>
+        <Text style={styles.expenseAmount}>₹{item.amount.toFixed(2)}</Text>
+        <Text style={styles.expenseDate}>{item.date}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.totalAmount}>Total: ₹{totalAmount.toFixed(2)}</Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('AddExpense')}
+        >
+          <Text style={styles.addButtonText}>Add Expense</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={expenses}
+        renderItem={renderExpenseItem}
+        keyExtractor={item => item.id}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    padding: 16,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalAmount: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  expenseItem: {
+    backgroundColor: '#fff',
+    padding: 16,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  expenseInfo: {
+    flex: 1,
+  },
+  expenseTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  expenseCategory: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  expenseDate: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+});
+
+export default HomeScreen;
+
+// src/screens/AddExpenseScreen.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+import { useDispatch } from 'react-redux';
+import { addExpense } from '../store/expenseSlice';
+
+const AddExpenseScreen = ({ navigation }) => {
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+  const [notes, setNotes] = useState('');
+  const dispatch = useDispatch();
+
+  const handleSubmit = () => {
+    if (!title || !amount || !category) return;
+
+    const newExpense = {
+      id: Date.now().toString(),
+      title,
+      amount: parseFloat(amount),
+      category,
+      notes,
+      date: new Date().toLocaleDateString(),
+    };
+
+    dispatch(addExpense(newExpense));
+    navigation.goBack();
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.form}>
+        <Text style={styles.label}>Title</Text>
+        <TextInput
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Enter expense title"
+        />
+
+        <Text style={styles.label}>Amount</Text>
+        <TextInput
+          style={styles.input}
+          value={amount}
+          onChangeText={setAmount}
+          placeholder="Enter amount"
+          keyboardType="numeric"
+        />
+
+        <Text style={styles.label}>Category</Text>
+        <TextInput
+          style={styles.input}
+          value={category}
+          onChangeText={setCategory}
+          placeholder="Enter category"
+        />
+
+        <Text style={styles.label}>Notes (Optional)</Text>
+        <TextInput
+          style={[styles.input, styles.notesInput]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Enter notes"
+          multiline
+        />
+
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+        >
+          <Text style={styles.submitButtonText}>Add Expense</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  form: {
+    padding: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  notesInput: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+
+export default AddExpenseScreen;
+
+// src/screens/ExpenseDetailsScreen.tsx
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { deleteExpense } from '../store/expenseSlice';
+
+const ExpenseDetailsScreen = ({ route, navigation }) => {
+  const { expense } = route.params;
+  const dispatch = useDispatch();
+
+  const handleDelete = () => {
+    dispatch(deleteExpense(expense.id));
+    navigation.goBack();
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>{expense.title}</Text>
+        <Text style={styles.amount}>₹{expense.amount.toFixed(2)}</Text>
+        <Text style={styles.category}>Category: {expense.category}</Text>
+        <Text style={styles.date}>Date: {expense.date}</Text>
+        {expense.notes && (
+          <View style={styles.notesContainer}>
+            <Text style={styles.notesLabel}>Notes:</Text>
+            <Text style={styles.notes}>{expense.notes}</Text>
+          </View>
+        )}
+      </View>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={handleDelete}
+      >
+        <Text style={styles.deleteButtonText}>Delete Expense</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  amount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 16,
+  },
+  category: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  date: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 16,
+  },
+  notesContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 16,
+  },
+  notesLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  notes: {
+    fontSize: 16,
+    color: '#666',
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+
+export default ExpenseDetailsScreen;
