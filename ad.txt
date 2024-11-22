@@ -1,0 +1,1024 @@
+﻿Cordova
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BMI Calculator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .bmi-container {
+            text-align: center;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+        }
+        .bmi-container h2 {
+            color: #333;
+        }
+        .bmi-container input[type="number"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+        .bmi-container button {
+            padding: 10px;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 16px;
+            color: #fff;
+            background-color: #5cb85c;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .bmi-container p {
+            color: #666;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bmi-container">
+        <h2>BMI Calculator</h2>
+        <input type="number" id="weight" placeholder="Enter weight (kg)" min="0" step="0.1">
+        <input type="number" id="height" placeholder="Enter height (m)" min="0" step="0.01">
+        <button onclick="calculateBMI()">Calculate BMI</button>
+        <p id="result">Your BMI: --</p>
+    </div>
+
+
+    <script>
+        // Function to calculate and display the BMI
+        function calculateBMI() {
+            // Retrieve user inputs
+            var weight = parseFloat(document.getElementById('weight').value);
+            var height = parseFloat(document.getElementById('height').value);
+
+
+            // Validate inputs
+            if (!weight || !height || height <= 0) {
+                alert("Please enter valid weight and height values.");
+                return;
+            }
+
+
+            // Calculate BMI
+            var bmi = weight / (height * height);
+            bmi = bmi.toFixed(2);  // Round to two decimal places
+
+
+            // Display BMI result and interpretation
+            var resultText = "Your BMI: " + bmi + " - ";
+            if (bmi < 18.5) {
+                resultText += "Underweight";
+            } else if (bmi >= 18.5 && bmi < 24.9) {
+                resultText += "Normal weight";
+            } else if (bmi >= 25 && bmi < 29.9) {
+                resultText += "Overweight";
+            } else {
+                resultText += "Obesity";
+            }
+
+
+            document.getElementById('result').innerText = resultText;
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <div class="app-container">
+        <h1>To-Do List</h1>
+        <div class="input-container">
+            <input id="todo-input" type="text" placeholder="Add a new task">
+            <button onclick="addTask()">Add</button>
+        </div>
+        <ul id="todo-list"></ul>
+    </div>
+    <script src="js/index.js"></script>
+</body>
+</html>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+
+.app-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+}
+
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+
+.input-container {
+    display: flex;
+    gap: 10px;
+}
+
+
+input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+
+button {
+    padding: 8px 12px;
+    border: none;
+    background: #007bff;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+
+button:hover {
+    background: #0056b3;
+}
+
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0;
+}
+
+
+li {
+    background: #f9f9f9;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+li button {
+    background: #dc3545;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+
+li button:hover {
+    background: #a71d2a;
+}
+   
+function addTask() {
+    const taskInput = document.getElementById('todo-input');
+    const taskText = taskInput.value.trim();
+
+
+    if (taskText === '') return;
+
+
+    const taskList = document.getElementById('todo-list');
+
+
+    const taskItem = document.createElement('li');
+    taskItem.textContent = taskText;
+
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.onclick = () => taskList.removeChild(taskItem);
+
+
+    taskItem.appendChild(deleteButton);
+    taskList.appendChild(taskItem);
+
+
+    taskInput.value = '';
+}
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Current Location</title>
+    <style>
+        /* Basic styling */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .location-container {
+            text-align: center;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+        }
+        .location-container h2 {
+            color: #333;
+        }
+        .location-container button {
+            padding: 10px;
+            margin-top: 20px;
+            width: 100%;
+            font-size: 16px;
+            color: #fff;
+            background-color: #5cb85c;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .location-container p {
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="location-container">
+        <h2>Your Current Location</h2>
+        <p id="latitude">Latitude: --</p>
+        <p id="longitude">Longitude: --</p>
+        <button onclick="getLocation()">Find Location</button>
+    </div>
+
+
+    <script>
+        // Function to retrieve and display the current location
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError, { enableHighAccuracy: true });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+
+        // Show position if retrieval is successful
+        function showPosition(position) {
+            document.getElementById('latitude').innerText = "Latitude: " + position.coords.latitude;
+            document.getElementById('longitude').innerText = "Longitude: " + position.coords.longitude;
+        }
+
+
+        // Show error message if retrieval fails
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login Screen</title>
+    <style>
+        /* Styling for the login screen */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .login-container {
+            width: 300px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            text-align: center;
+        }
+        .login-container img {
+            width: 100px;
+            margin-bottom: 15px;
+        }
+        .login-container h2 {
+            margin: 0 0 20px;
+            color: #333;
+        }
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .login-container button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .submit-button {
+            background-color: #5cb85c;
+        }
+        .reset-button {
+            background-color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="img/logo.png" alt="Header Image" >
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" >
+        <input type="password" id="password" placeholder="Password" >
+        <button class="submit-button" onclick="submitLogin()">Submit</button>
+        <button class="reset-button" onclick="resetFields()">Reset</button>
+    </div>
+
+
+    <script>
+        // JavaScript to handle submit and reset actions
+        function submitLogin() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            if(username && password) {
+                alert("Login successful!");
+            } else {
+                alert("Please enter username and password.");
+            }
+        }
+
+
+        function resetFields() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+React Native
+
+
+import React, { useState } from "react";
+import { StyleSheet, Text, TextInput, View, Button, Alert } from "react-native";
+
+
+export default function App() {
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
+  const [bmi, setBmi] = useState(null);
+  const [status, setStatus] = useState("");
+
+
+  const calculateBMI = () => {
+    if (!weight || !height) {
+      Alert.alert("Error", "Please enter valid weight and height!");
+      return;
+    }
+
+
+    const weightNum = parseFloat(weight);
+    const heightNum = parseFloat(height) / 100; // Convert cm to meters
+    const bmiValue = weightNum / (heightNum * heightNum);
+
+
+    setBmi(bmiValue.toFixed(2));
+
+
+    if (bmiValue < 18.5) {
+      setStatus("Underweight");
+    } else if (bmiValue >= 18.5 && bmiValue < 25) {
+      setStatus("Normal weight");
+    } else if (bmiValue >= 25 && bmiValue < 29.9) {
+      setStatus("Overweight");
+    } else {
+      setStatus("Obese");
+    }
+  };
+
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>BMI Calculator</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter weight (kg)"
+        keyboardType="numeric"
+        value={weight}
+        onChangeText={setWeight}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Enter height (cm)"
+        keyboardType="numeric"
+        value={height}
+        onChangeText={setHeight}
+      />
+      <Button title="Calculate BMI" onPress={calculateBMI} />
+      {bmi && (
+        <View style={styles.resultContainer}>
+          <Text style={styles.result}>BMI: {bmi}</Text>
+          <Text style={styles.status}>Status: {status}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "white",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  resultContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  result: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  status: {
+    fontSize: 18,
+    color: "#555",
+  },
+});
+
+
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Button,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
+
+
+export default function App() {
+  const [task, setTask] = useState("");
+  const [tasks, setTasks] = useState([]);
+
+
+  const addTask = () => {
+    if (task.trim() === "") {
+      alert("Task cannot be empty!");
+      return;
+    }
+    setTasks([...tasks, { id: Date.now().toString(), value: task }]);
+    setTask("");
+  };
+
+
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter((task) => task.id !== taskId));
+  };
+
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>To-Do List</Text>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Add a new task"
+          value={task}
+          onChangeText={setTask}
+        />
+        <Button title="Add" onPress={addTask} />
+      </View>
+      <FlatList
+        data={tasks}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.taskItem}>
+            <Text style={styles.taskText}>{item.value}</Text>
+            <TouchableOpacity onPress={() => deleteTask(item.id)}>
+              <Text style={styles.deleteButton}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    marginRight: 10,
+    borderRadius: 5,
+  },
+  taskItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  taskText: {
+    fontSize: 16,
+  },
+  deleteButton: {
+    color: "red",
+    fontWeight: "bold",
+  },
+});
+
+
+
+
+
+
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Button,
+  Alert,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+
+
+export default function App() {
+  const [inputValue, setInputValue] = useState("");
+  const [convertedValue, setConvertedValue] = useState(null);
+  const [unitType, setUnitType] = useState("kmToMiles");
+
+
+  const convertUnits = () => {
+    if (!inputValue || isNaN(inputValue)) {
+      Alert.alert("Invalid Input", "Please enter a valid number.");
+      return;
+    }
+
+
+    const value = parseFloat(inputValue);
+    let result;
+
+
+    switch (unitType) {
+      case "kmToMiles":
+        result = value * 0.621371;
+        break;
+      case "milesToKm":
+        result = value / 0.621371;
+        break;
+      case "kgToPounds":
+        result = value * 2.20462;
+        break;
+      case "poundsToKg":
+        result = value / 2.20462;
+        break;
+      default:
+        result = "Invalid conversion";
+    }
+
+
+    setConvertedValue(result.toFixed(2));
+  };
+
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Unit Converter</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter value"
+        keyboardType="numeric"
+        value={inputValue}
+        onChangeText={setInputValue}
+      />
+      <Picker
+        selectedValue={unitType}
+        onValueChange={(itemValue) => setUnitType(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Kilometers to Miles" value="kmToMiles" />
+        <Picker.Item label="Miles to Kilometers" value="milesToKm" />
+        <Picker.Item label="Kilograms to Pounds" value="kgToPounds" />
+        <Picker.Item label="Pounds to Kilograms" value="poundsToKg" />
+      </Picker>
+      <Button title="Convert" onPress={convertUnits} />
+      {convertedValue && (
+        <Text style={styles.result}>
+          Converted Value: {convertedValue}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  input: {
+    width: "80%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 5,
+  },
+  picker: {
+    width: "80%",
+    marginBottom: 20,
+  },
+  result: {
+    fontSize: 20,
+    marginTop: 20,
+    color: "#555",
+  },
+});
+
+
+
+
+
+
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View, Button, Alert } from "react-native";
+import * as Location from "expo-location";
+
+
+export default function App() {
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+
+
+  const getLocation = async () => {
+    try {
+      // Request permission to access location
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+
+      // Fetch the current location
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    }
+  };
+
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Get Current Location</Text>
+      <Button title="Fetch Location" onPress={getLocation} />
+      {errorMsg ? (
+        <Text style={styles.errorText}>{errorMsg}</Text>
+      ) : location ? (
+        <Text style={styles.locationText}>
+          Latitude: {location.coords.latitude}, Longitude:{" "}
+          {location.coords.longitude}
+        </Text>
+      ) : (
+        <Text style={styles.infoText}>Press the button to get location.</Text>
+      )}
+    </View>
+  );
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  infoText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: "gray",
+  },
+  locationText: {
+    marginTop: 20,
+    fontSize: 16,
+  },
+  errorText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: "red",
+  },
+});
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Button,
+  FlatList,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
+
+
+export default function App() {
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [expenses, setExpenses] = useState([]);
+
+
+  const addExpense = () => {
+    if (!description.trim() || !amount.trim() || isNaN(amount)) {
+      Alert.alert("Invalid Input", "Please enter a valid description and amount.");
+      return;
+    }
+
+
+    setExpenses((prevExpenses) => [
+      ...prevExpenses,
+      { id: Date.now().toString(), description, amount: parseFloat(amount) },
+    ]);
+    setDescription("");
+    setAmount("");
+  };
+
+
+  const deleteExpense = (id) => {
+    setExpenses((prevExpenses) => prevExpenses.filter((expense) => expense.id !== id));
+  };
+
+
+  const calculateTotal = () => {
+    return expenses.reduce((total, item) => total + item.amount, 0).toFixed(2);
+  };
+
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Expense Tracker</Text>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Description"
+          value={description}
+          onChangeText={setDescription}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Amount"
+          keyboardType="numeric"
+          value={amount}
+          onChangeText={setAmount}
+        />
+        <Button title="Add Expense" onPress={addExpense} />
+      </View>
+      <Text style={styles.totalText}>Total: ${calculateTotal()}</Text>
+      <FlatList
+        data={expenses}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.expenseItem}>
+            <Text style={styles.expenseText}>
+              {item.description} - ${item.amount.toFixed(2)}
+            </Text>
+            <TouchableOpacity onPress={() => deleteExpense(item.id)}>
+              <Text style={styles.deleteButton}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  totalText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  expenseItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  expenseText: {
+    fontSize: 16,
+  },
+  deleteButton: {
+    color: "red",
+    fontWeight: "bold",
+  },
+});
