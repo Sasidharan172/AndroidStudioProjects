@@ -1,0 +1,325 @@
+// First, create a new file types.ts
+export interface WeatherData {
+  main: {
+    temp: number;
+    humidity: number;
+    feels_like: number;
+  };
+  weather: Array<{
+    main: string;
+    description: string;
+    icon: string;
+  }>;
+  name: string;
+  wind: {
+    speed: number;
+  };
+}
+
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  city?: string;
+}
+
+// Create config.ts
+export const OPENWEATHER_API_KEY = 'YOUR_API_KEY'; // Replace with your API key
+export const WEATHER_API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
+
+// Create hooks/useLocation.ts
+import { useState, useEffect } from 'react';
+import Geolocation from '@react-native-community/geolocation';
+import { LocationData } from '../types';
+import Geocoder from 'react-native-geocoding';
+
+Geocoder.init("YOUR_GOOGLE_API_KEY"); // Replace with your Google API key
+
+export const useLocation = () => {
+  const [location, setLocation] = useState<LocationData | null>(null);
+  const [error, setError] = useState<string>('');
+
+  const updateLocation = async () => {
+    try {
+      Geolocation.getCurrentPosition(
+        async position => {
+          const { latitude, longitude } = position.coords;
+          
+          // Get city name using reverse geocoding
+          try {
+            const response = await Geocoder.from(latitude, longitude);
+            const city = response.results[0].address_components.find(
+              component => component.types.includes('locality')
+            )?.long_name;
+
+            setLocation({ latitude, longitude, city });
+          } catch (geocodeError) {
+            setLocation({ latitude, longitude });
+          }
+        },
+        error => setError(error.message),
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+      );
+    } catch (e) {
+      setError('Failed to get location');
+    }
+  };
+
+  useEffect(() => {
+    updateLocation();
+  }, []);
+
+  return { location, error, updateLocation };
+};
+
+// Create services/weatherService.ts
+import { WeatherData } from '../types';
+import { WEATHER_API_BASE_URL, OPENWEATHER_API_KEY } from '../config';
+
+export const getWeatherByCity = async (city: string): Promise<WeatherData> => {
+  const response = await fetch(
+    `${WEATHER_API_BASE_URL}/weather?q=${city}&units=metric&appid=${OPENWEATHER_API_KEY}`
+  );
+  
+  if (!response.ok) {
+    throw new Error('Weather data not found');
+  }
+  
+  return response.json();
+};
+
+export const getWeatherByCoords = async (
+  lat: number,
+  lon: number
+): Promise<WeatherData> => {
+  const response = await fetch(
+    `${WEATHER_API_BASE_URL}/weather?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_API_KEY}`
+  );
+  
+  if (!response.ok) {
+    throw new Error('Weather data not found');
+  }
+  
+  return response.json();
+};
+
+// Create components/WeatherCard.tsx
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { WeatherData } from '../types';
+
+interface WeatherCardProps {
+  weather: WeatherData;
+}
+
+export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.city}>{weather.name}</Text>
+      <Text style={styles.temperature}>
+        {Math.round(weather.main.temp)}°C
+      </Text>
+      <Text style={styles.description}>
+        {weather.weather[0].description}
+      </Text>
+      <Image
+        style={styles.weatherIcon}
+        source={{
+          uri: `https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`,
+        }}
+      />
+      <View style={styles.detailsContainer}>
+        <Text style={styles.details}>
+          Feels like: {Math.round(weather.main.feels_like)}°C
+        </Text>
+        <Text style={styles.details}>
+          Humidity: {weather.main.humidity}%
+        </Text>
+        <Text style={styles.details}>
+          Wind: {weather.wind.speed} m/s
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    alignItems: 'center',
+  },
+  city: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  temperature: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  description: {
+    fontSize: 18,
+    color: '#666',
+    textTransform: 'capitalize',
+  },
+  weatherIcon: {
+    width: 100,
+    height: 100,
+  },
+  detailsContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  details: {
+    fontSize: 16,
+    color: '#666',
+    marginVertical: 5,
+  },
+});
+
+// Create App.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  SafeAreaView,
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { useLocation } from './hooks/useLocation';
+import { getWeatherByCity, getWeatherByCoords } from './services/weatherService';
+import { WeatherCard } from './components/WeatherCard';
+import { WeatherData } from './types';
+
+const App = () => {
+  const { location, error: locationError } = useLocation();
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [cityInput, setCityInput] = useState('');
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    if (location?.latitude && location?.longitude) {
+      fetchWeatherByLocation();
+    }
+  }, [location]);
+
+  const fetchWeatherByLocation = async () => {
+    if (!location) return;
+    
+    setLoading(true);
+    try {
+      const data = await getWeatherByCoords(
+        location.latitude,
+        location.longitude
+      );
+      setWeather(data);
+      setError('');
+    } catch (e) {
+      setError('Failed to fetch weather data');
+      Alert.alert('Error', 'Failed to fetch weather data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCitySearch = async () => {
+    if (!cityInput.trim()) {
+      Alert.alert('Error', 'Please enter a city name');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await getWeatherByCity(cityInput.trim());
+      setWeather(data);
+      setError('');
+    } catch (e) {
+      setError('City not found');
+      Alert.alert('Error', 'City not found');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter city name"
+          value={cityInput}
+          onChangeText={setCityInput}
+          onSubmitEditing={handleCitySearch}
+        />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleCitySearch}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>Search</Text>
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : weather ? (
+        <WeatherCard weather={weather} />
+      ) : (
+        <Text style={styles.error}>{error || locationError}</Text>
+      )}
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    padding: 10,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    backgroundColor: 'white',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  error: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+});
+
+export default App;
