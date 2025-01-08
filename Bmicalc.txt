@@ -1,0 +1,358 @@
+// App.tsx
+
+import React, { useState } from 'react';
+
+import {
+
+StyleSheet,
+
+View,
+
+Text,
+
+TextInput,
+
+TouchableOpacity,
+
+Animated,
+
+Keyboard,
+
+SafeAreaView,
+
+Platform,
+
+StatusBar
+
+} from 'react-native';
+
+const BMICalculator = () => {
+
+const [height, setHeight] = useState<string>('');
+
+const [weight, setWeight] = useState<string>('');
+
+const [bmi, setBMI] = useState<number | null>(null);
+
+const [status, setStatus] = useState<string>('');
+
+// Animations
+
+const fadeAnim = new Animated.Value(0);
+
+const slideAnim = new Animated.Value(0);
+
+const calculateBMI = () => {
+
+Keyboard.dismiss();
+
+if (height && weight) {
+
+const heightInM = parseFloat(height) / 100;
+
+const weightInKg = parseFloat(weight);
+
+const bmiValue = (weightInKg / (heightInM * heightInM));
+
+setBMI(Number(bmiValue.toFixed(1)));
+
+// Determine BMI status
+
+if (bmiValue < 18.5) setStatus('Underweight');
+
+else if (bmiValue < 24.9) setStatus('Normal');
+
+else if (bmiValue < 29.9) setStatus('Overweight');
+
+else setStatus('Obese');
+
+// Trigger animations
+
+Animated.parallel([
+
+Animated.timing(fadeAnim, {
+
+toValue: 1,
+
+duration: 500,
+
+useNativeDriver: true,
+
+}),
+
+Animated.spring(slideAnim, {
+
+toValue: 1,
+
+tension: 20,
+
+friction: 7,
+
+useNativeDriver: true,
+
+}),
+
+]).start();
+
+}
+
+};
+
+const getStatusColor = () => {
+
+switch (status) {
+
+case 'Underweight': return '#FFA500';
+
+case 'Normal': return '#4CAF50';
+
+case 'Overweight': return '#FF6B6B';
+
+case 'Obese': return '#FF4444';
+
+default: return '#000';
+
+}
+
+};
+
+return (
+
+<SafeAreaView style={styles.safeArea}>
+
+<StatusBar
+
+barStyle="dark-content"
+
+backgroundColor="#fff"
+
+/>
+
+<View style={styles.container}>
+
+<Text style={styles.title}>BMI Calculator</Text>
+
+<View style={styles.inputContainer}>
+
+<TextInput
+
+style={styles.input}
+
+placeholder="Height (cm)"
+
+keyboardType="numeric"
+
+value={height}
+
+onChangeText={setHeight}
+
+placeholderTextColor="#666"
+
+/>
+
+<TextInput
+
+style={styles.input}
+
+placeholder="Weight (kg)"
+
+keyboardType="numeric"
+
+value={weight}
+
+onChangeText={setWeight}
+
+placeholderTextColor="#666"
+
+/>
+
+<TouchableOpacity
+
+style={styles.button}
+
+onPress={calculateBMI}
+
+>
+
+<Text style={styles.buttonText}>Calculate BMI</Text>
+
+</TouchableOpacity>
+
+</View>
+
+{bmi && (
+
+<Animated.View
+
+style={[
+
+styles.resultContainer,
+
+{
+opacity: fadeAnim,
+
+transform: [
+
+{
+
+translateY: slideAnim.interpolate({
+
+inputRange: [0, 1],
+
+outputRange: [50, 0],
+
+}),
+
+},
+
+],
+
+},
+
+]}
+
+>
+
+<Text style={styles.bmiText}>Your BMI</Text>
+
+<Text style={styles.bmiValue}>{bmi}</Text>
+
+<Text style={[styles.statusText, { color:
+
+getStatusColor() }]}>
+
+{status}
+
+</Text>
+
+</Animated.View>
+
+)}
+
+</View>
+
+</SafeAreaView>
+
+);
+
+};
+
+const styles = StyleSheet.create({
+
+safeArea: {
+
+flex: 1,
+
+backgroundColor: '#fff',
+
+paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight :
+
+0,
+
+},
+
+container: {
+
+flex: 1,
+
+padding: 20,
+
+},
+
+title: {
+
+fontSize: 28,
+
+fontWeight: 'bold',
+
+textAlign: 'center',
+
+marginVertical: 20,
+
+color: '#333',
+
+},
+
+inputContainer: {
+
+gap: 15,
+},
+
+input: {
+
+backgroundColor: '#f5f5f5',
+
+padding: 15,
+
+borderRadius: 10,
+
+fontSize: 16,
+
+color: '#333',
+
+},
+
+button: {
+
+backgroundColor: '#007AFF',
+
+padding: 15,
+
+borderRadius: 10,
+
+marginTop: 10,
+
+},
+
+buttonText: {
+
+color: '#fff',
+
+textAlign: 'center',
+
+fontSize: 16,
+
+fontWeight: '600',
+
+},
+
+resultContainer: {
+
+marginTop: 30,
+
+alignItems: 'center',
+
+},
+
+bmiText: {
+
+fontSize: 18,
+
+color: '#666',
+
+},
+
+bmiValue: {
+
+fontSize: 48,
+
+fontWeight: 'bold',
+
+color: '#333',
+
+marginVertical: 10,
+
+},
+
+statusText: {
+
+fontSize: 24,
+
+fontWeight: '600',
+
+},
+
+});
+
+export default BMICalculator;
+
