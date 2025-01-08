@@ -1,0 +1,880 @@
+// MainActivity.java
+
+package com.example.studentlibapp;
+
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.ViewPager;
+import com.google.android.material.tabs.TabLayout;
+
+public class MainActivity extends AppCompatActivity {
+    private ViewPager viewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+
+        viewPager = findViewById(R.id.viewPager);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
+
+        SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        viewPager.setAdapter(sectionsPagerAdapter);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+}
+
+
+// AvailableBooksFragment.java
+
+package com.example.studentlibapp;
+
+import android.app.AlertDialog;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import androidx.fragment.app.Fragment;
+import java.util.ArrayList;
+
+public class AvailableBooksFragment extends Fragment {
+    private DatabaseHelper dbHelper;
+    private ListView listView;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_available_books, container, false);
+
+        dbHelper = new DatabaseHelper(getContext());
+        listView = view.findViewById(R.id.listViewBooks);
+        Button btnAddBook = view.findViewById(R.id.btnAddBook);
+
+        loadBooks();
+
+        btnAddBook.setOnClickListener(v -> showAddBookDialog());
+
+        return view;
+    }
+
+    private void loadBooks() {
+        ArrayList<Book> books = dbHelper.getAvailableBooks();
+        BookAdapter adapter = new BookAdapter(getContext(), books);
+        listView.setAdapter(adapter);
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Book book = books.get(position);
+            showBookOptionsDialog(book);
+        });
+    }
+
+    private void showAddBookDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_book, null);
+
+        EditText editTitle = dialogView.findViewById(R.id.editTitle);
+        EditText editAuthor = dialogView.findViewById(R.id.editAuthor);
+
+        builder.setView(dialogView)
+                .setTitle("Add New Book")
+                .setPositiveButton("Add", (dialog, which) -> {
+                    String title = editTitle.getText().toString();
+                    String author = editAuthor.getText().toString();
+
+                    if (!title.isEmpty() && !author.isEmpty()) {
+                        Book book = new Book(title, author);
+                        dbHelper.addBook(book);
+                        loadBooks();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showBookOptionsDialog(Book book) {
+        String[] options = {"Lend Book", "Reserve Book"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(book.getTitle())
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            showLendBookDialog(book);
+                            break;
+                        case 1:
+                            showReserveBookDialog(book);
+                            break;
+                    }
+                })
+                .show();
+    }
+
+    private void showLendBookDialog(Book book) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_lend_book, null);
+
+        EditText editStudentId = dialogView.findViewById(R.id.editStudentId);
+
+        builder.setView(dialogView)
+                .setTitle("Lend Book")
+                .setPositiveButton("Lend", (dialog, which) -> {
+                    String studentId = editStudentId.getText().toString();
+                    if (!studentId.isEmpty()) {
+                        dbHelper.lendBook(book.getId(), Integer.parseInt(studentId),
+                                getCurrentDate(), getDueDate());
+                        loadBooks();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showReserveBookDialog(Book book) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_reserve_book, null);
+
+        EditText editStudentId = dialogView.findViewById(R.id.editStudentId);
+
+        builder.setView(dialogView)
+                .setTitle("Reserve Book")
+                .setPositiveButton("Reserve", (dialog, which) -> {
+                    String studentId = editStudentId.getText().toString();
+                    if (!studentId.isEmpty()) {
+                        dbHelper.reserveBook(book.getId(), Integer.parseInt(studentId),
+                                getCurrentDate());
+                        loadBooks();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private String getCurrentDate() {
+        return new java.text.SimpleDateFormat("yyyy-MM-dd")
+                .format(new java.util.Date());
+    }
+
+    private String getDueDate() {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.add(java.util.Calendar.DAY_OF_MONTH, 14); // 2 weeks loan period
+        return new java.text.SimpleDateFormat("yyyy-MM-dd")
+                .format(calendar.getTime());
+    }
+}
+
+
+// Book.java
+
+package com.example.studentlibapp;
+
+public class Book {
+    private int id;
+    private String title;
+    private String author;
+    private String status;
+
+    public Book() {}
+
+    public Book(String title, String author) {
+        this.title = title;
+        this.author = author;
+    }
+
+    // Getters and setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getAuthor() { return author; }
+    public void setAuthor(String author) { this.author = author; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}
+
+
+// BookAdapter.java
+
+package com.example.studentlibapp;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+
+import java.util.ArrayList;
+
+public class BookAdapter extends ArrayAdapter<Book> {
+    public BookAdapter(Context context, ArrayList<Book> books) {
+        super(context, 0, books);
+    }
+
+    @NonNull
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        Book book = getItem(position);
+
+        if (convertView == null) {
+            convertView = LayoutInflater.from(getContext())
+                    .inflate(R.layout.list_item_book, parent, false);
+        }
+
+        TextView textTitle = convertView.findViewById(R.id.textTitle);
+        TextView textAuthor = convertView.findViewById(R.id.textAuthor);
+        TextView textStatus = convertView.findViewById(R.id.textStatus);
+
+        assert book != null;
+        textTitle.setText(book.getTitle());
+        textAuthor.setText(book.getAuthor());
+        textStatus.setText(book.getStatus());
+
+        return convertView;
+    }
+}
+
+
+// DatabaseHelper.java
+
+package com.example.studentlibapp;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import java.util.ArrayList;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+    private static final String DATABASE_NAME = "LibraryDB";
+    private static final int DATABASE_VERSION = 1;
+
+    // Table names
+    private static final String TABLE_BOOKS = "books";
+    private static final String TABLE_LOANS = "loans";
+    private static final String TABLE_RESERVATIONS = "reservations";
+
+    // Common column names
+    private static final String KEY_ID = "id";
+    private static final String KEY_BOOK_ID = "book_id";
+    private static final String KEY_STUDENT_ID = "student_id";
+
+    // Books table columns
+    private static final String KEY_TITLE = "title";
+    private static final String KEY_AUTHOR = "author";
+    private static final String KEY_STATUS = "status";
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // Create Books table
+        String CREATE_BOOKS_TABLE = "CREATE TABLE " + TABLE_BOOKS + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + KEY_TITLE + " TEXT,"
+                + KEY_AUTHOR + " TEXT,"
+                + KEY_STATUS + " TEXT" + ")";
+
+        // Create Loans table
+        String CREATE_LOANS_TABLE = "CREATE TABLE " + TABLE_LOANS + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + KEY_BOOK_ID + " INTEGER,"
+                + KEY_STUDENT_ID + " INTEGER,"
+                + "date_borrowed TEXT,"
+                + "date_due TEXT" + ")";
+
+        // Create Reservations table
+        String CREATE_RESERVATIONS_TABLE = "CREATE TABLE " + TABLE_RESERVATIONS + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + KEY_BOOK_ID + " INTEGER,"
+                + KEY_STUDENT_ID + " INTEGER,"
+                + "reservation_date TEXT" + ")";
+
+        db.execSQL(CREATE_BOOKS_TABLE);
+        db.execSQL(CREATE_LOANS_TABLE);
+        db.execSQL(CREATE_RESERVATIONS_TABLE);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOOKS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOANS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_RESERVATIONS);
+        onCreate(db);
+    }
+
+    // Book operations
+    public long addBook(Book book) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_TITLE, book.getTitle());
+        values.put(KEY_AUTHOR, book.getAuthor());
+        values.put(KEY_STATUS, "Available");
+        return db.insert(TABLE_BOOKS, null, values);
+    }
+
+    // Get all books regardless of status
+    public ArrayList<Book> getAllBooks() {
+        ArrayList<Book> bookList = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + TABLE_BOOKS;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Book book = new Book();
+                book.setId(cursor.getInt(0));
+                book.setTitle(cursor.getString(1));
+                book.setAuthor(cursor.getString(2));
+                book.setStatus(cursor.getString(3));
+                bookList.add(book);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return bookList;
+    }
+
+    // Get available books only
+    public ArrayList<Book> getAvailableBooks() {
+        ArrayList<Book> bookList = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + TABLE_BOOKS + " WHERE " + KEY_STATUS + "='Available'";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Book book = new Book();
+                book.setId(cursor.getInt(0));
+                book.setTitle(cursor.getString(1));
+                book.setAuthor(cursor.getString(2));
+                book.setStatus(cursor.getString(3));
+                bookList.add(book);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return bookList;
+    }
+
+    // Get lent books
+    public ArrayList<Book> getLentBooks() {
+        ArrayList<Book> bookList = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + TABLE_BOOKS + " WHERE " + KEY_STATUS + "='Lent'";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Book book = new Book();
+                book.setId(cursor.getInt(0));
+                book.setTitle(cursor.getString(1));
+                book.setAuthor(cursor.getString(2));
+                book.setStatus(cursor.getString(3));
+                bookList.add(book);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return bookList;
+    }
+
+    // Get reserved books
+    public ArrayList<Book> getReservedBooks() {
+        ArrayList<Book> bookList = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + TABLE_BOOKS + " WHERE " + KEY_STATUS + "='Reserved'";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Book book = new Book();
+                book.setId(cursor.getInt(0));
+                book.setTitle(cursor.getString(1));
+                book.setAuthor(cursor.getString(2));
+                book.setStatus(cursor.getString(3));
+                bookList.add(book);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return bookList;
+    }
+
+    // Loan operations
+    public long lendBook(int bookId, int studentId, String dateBorrowed, String dateDue) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_BOOK_ID, bookId);
+        values.put(KEY_STUDENT_ID, studentId);
+        values.put("date_borrowed", dateBorrowed);
+        values.put("date_due", dateDue);
+
+        // Update book status
+        ContentValues bookValues = new ContentValues();
+        bookValues.put(KEY_STATUS, "Lent");
+        db.update(TABLE_BOOKS, bookValues, KEY_ID + "=?", new String[]{String.valueOf(bookId)});
+
+        return db.insert(TABLE_LOANS, null, values);
+    }
+
+    // Return a book
+    public void returnBook(int bookId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Update book status to Available
+        ContentValues values = new ContentValues();
+        values.put(KEY_STATUS, "Available");
+        db.update(TABLE_BOOKS, values, KEY_ID + "=?", new String[]{String.valueOf(bookId)});
+
+        // Remove the loan record
+        db.delete(TABLE_LOANS, KEY_BOOK_ID + "=?", new String[]{String.valueOf(bookId)});
+    }
+
+    // Reservation operations
+    public long reserveBook(int bookId, int studentId, String reservationDate) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_BOOK_ID, bookId);
+        values.put(KEY_STUDENT_ID, studentId);
+        values.put("reservation_date", reservationDate);
+
+        // Update book status
+        ContentValues bookValues = new ContentValues();
+        bookValues.put(KEY_STATUS, "Reserved");
+        db.update(TABLE_BOOKS, bookValues, KEY_ID + "=?", new String[]{String.valueOf(bookId)});
+
+        return db.insert(TABLE_RESERVATIONS, null, values);
+    }
+
+    // Cancel reservation
+    public void cancelReservation(int bookId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Update book status to Available
+        ContentValues values = new ContentValues();
+        values.put(KEY_STATUS, "Available");
+        db.update(TABLE_BOOKS, values, KEY_ID + "=?", new String[]{String.valueOf(bookId)});
+
+        // Remove the reservation record
+        db.delete(TABLE_RESERVATIONS, KEY_BOOK_ID + "=?", new String[]{String.valueOf(bookId)});
+    }
+
+    // Get loan details for a book
+    public Cursor getLoanDetails(int bookId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.query(TABLE_LOANS, null,
+                KEY_BOOK_ID + "=?", new String[]{String.valueOf(bookId)},
+                null, null, null);
+    }
+
+    // Get reservation details for a book
+    public Cursor getReservationDetails(int bookId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.query(TABLE_RESERVATIONS, null,
+                KEY_BOOK_ID + "=?", new String[]{String.valueOf(bookId)},
+                null, null, null);
+    }
+}
+
+
+// LentBooksFragment.java
+
+package com.example.studentlibapp;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+import androidx.fragment.app.Fragment;
+import java.util.ArrayList;
+
+public class LentBooksFragment extends Fragment {
+    private DatabaseHelper dbHelper;
+    private ListView listView;
+    private BookAdapter adapter;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_lent_books, container, false);
+
+        dbHelper = new DatabaseHelper(getContext());
+        listView = view.findViewById(R.id.listViewBooks);
+
+        loadLentBooks();
+
+        return view;
+    }
+
+    private void loadLentBooks() {
+        ArrayList<Book> books = dbHelper.getLentBooks();
+        adapter = new BookAdapter(getContext(), books);
+        listView.setAdapter(adapter);
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Book book = books.get(position);
+            showReturnBookDialog(book);
+        });
+    }
+
+    private void showReturnBookDialog(Book book) {
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Return Book")
+                .setMessage("Do you want to return this book?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    dbHelper.returnBook(book.getId());
+                    loadLentBooks();
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+}
+
+
+// ReservedBooksFragment.java
+
+package com.example.studentlibapp;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+import androidx.fragment.app.Fragment;
+import java.util.ArrayList;
+
+public class ReservedBooksFragment extends Fragment {
+    private DatabaseHelper dbHelper;
+    private ListView listView;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_reserved_books, container, false);
+
+        dbHelper = new DatabaseHelper(getContext());
+        listView = view.findViewById(R.id.listViewBooks);
+
+        loadReservedBooks();
+
+        return view;
+    }
+
+    private void loadReservedBooks() {
+        ArrayList<Book> books = dbHelper.getReservedBooks();
+        BookAdapter adapter = new BookAdapter(getContext(), books);
+        listView.setAdapter(adapter);
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Book book = books.get(position);
+            showCancelReservationDialog(book);
+        });
+    }
+
+    private void showCancelReservationDialog(Book book) {
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Cancel Reservation")
+                .setMessage("Do you want to cancel this reservation?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    dbHelper.cancelReservation(book.getId());
+                    loadReservedBooks();
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+}
+
+
+// SectionsPagerAdapter.java
+
+package com.example.studentlibapp;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+
+public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    private final String[] TAB_TITLES = new String[]{"Available", "Lent", "Reserved"};
+
+    public SectionsPagerAdapter(FragmentManager fm) {
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+        switch (position) {
+            case 0:
+                return new AvailableBooksFragment();
+            case 1:
+                return new LentBooksFragment();
+            case 2:
+                return new ReservedBooksFragment();
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public int getCount() {
+        return TAB_TITLES.length;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        return TAB_TITLES[position];
+    }
+}
+
+
+// activity_main.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        app:tabGravity="fill"
+        app:tabMode="fixed"
+        app:tabTextColor="@android:color/white" />
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>
+
+// dialog_add_book.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Book Title"
+        android:inputType="text"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/editAuthor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Author Name"
+        android:inputType="text" />
+
+</LinearLayout>
+// dialog_cancel_reservation.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/textBookInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textReservationInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAlignment="center" />
+
+</LinearLayout>
+
+
+// dialog_lend_book.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editStudentId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Student ID"
+        android:inputType="number" />
+
+    <TextView
+        android:id="@+id/textDueDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Loan period: 14 days"
+        android:textAlignment="center"
+        android:textStyle="italic" />
+
+</LinearLayout>
+
+
+// dialog_reserve_book.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editStudentId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Student ID"
+        android:inputType="number" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Reservation valid for 48 hours"
+        android:textAlignment="center"
+        android:textStyle="italic" />
+
+</LinearLayout>
+
+
+// dialog_return_book.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/textBookInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textReturnDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAlignment="center" />
+
+</LinearLayout>
+
+
+// fragment_available_books.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ListView
+        android:id="@+id/listViewBooks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btnAddBook"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add New Book" />
+
+</LinearLayout>
+
+// fragment_lent_books.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ListView
+        android:id="@+id/listViewBooks"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>
+
+
+// fragment_reserved_books.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ListView
+        android:id="@+id/listViewBooks"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>
+
+
+// list_item_book.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textAuthor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/textStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="@android:color/holo_green_dark"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>
