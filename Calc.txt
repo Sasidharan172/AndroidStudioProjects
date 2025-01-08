@@ -1,0 +1,112 @@
+// MainActivity.java
+
+package com.example.testapp;
+
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    private final int[] colors = {Color.WHITE, Color.LTGRAY, Color.CYAN, Color.YELLOW};
+    private int colorIndex = 0;
+    private final float[] fontSizes = {24f, 32f, 40f, 48f};
+    private int sizeIndex = 0;
+    private int styleIndex = 0;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        LinearLayout mainLayout = findViewById(R.id.mainLayout);
+        TextView sampleText = findViewById(R.id.sampleText);
+        Button colorButton = findViewById(R.id.colorButton);
+        Button fontStyleButton = findViewById(R.id.fontStyleButton);
+        Button fontSizeButton = findViewById(R.id.fontSizeButton);
+
+        colorButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mainLayout.setBackgroundColor(colors[colorIndex]);
+                colorIndex = (colorIndex + 1) % colors.length;
+            }
+        });
+
+        fontStyleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (styleIndex) {
+                    case 0:
+                        sampleText.setTypeface(null, Typeface.BOLD);
+                        break;
+                    case 1:
+                        sampleText.setTypeface(null, Typeface.ITALIC);
+                        break;
+                    case 2:
+                        sampleText.setTypeface(null, Typeface.BOLD_ITALIC);
+                        break;
+                    case 3:
+                        sampleText.setTypeface(null, Typeface.NORMAL);
+                        break;
+                }
+                styleIndex = (styleIndex + 1) % 4;
+            }
+        });
+
+        fontSizeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sampleText.setTextSize(fontSizes[sizeIndex]);
+                sizeIndex = (sizeIndex + 1) % fontSizes.length;
+            }
+        });
+    }
+}
+
+
+// activity_main.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:id="@+id/mainLayout">
+
+    <TextView
+        android:id="@+id/sampleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sample Text"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="20dp"/>
+
+    <Button
+        android:id="@+id/colorButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Background"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/fontStyleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Font Style"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/fontSizeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Font Size"
+        android:layout_gravity="center"/>
+</LinearLayout>
